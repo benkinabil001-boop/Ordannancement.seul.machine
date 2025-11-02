@@ -3,90 +3,193 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ordonnancement IA — Smart Scheduler</title>
+  <title>Ordonnancement sur une seule machine — Projet IA</title>
 
-  <!-- Style principal -->
-  <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 
-  <!-- Librairies externes (nécessaires au web / PDF) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- CSS local -->
+  <link rel="stylesheet" href="./style.css">
 
-  <!-- Meta pour le référencement -->
-  <meta name="description" content="Simulateur d’ordonnancement intelligent basé sur l’IA. Comparez FIFO, SPT, LPT, DP, RC, générez des Gantt et rapports PDF.">
-  <meta name="author" content="Nabil Benkirane">
-  <meta name="theme-color" content="#0b5f8a">
+  <!-- favicon -->
+  <link rel="icon" href="./favicon.png" type="image/png">
+
+  <!-- jsPDF & html2canvas pour export PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/3.5.0/jspdf.umd.min.js" defer></script>
+
+  <!-- Meta description -->
+  <meta name="description" content="Simulateur d'ordonnancement (machine unique) — Gantt, IA, export PDF — projet étudiant" />
 </head>
-
 <body>
-  <header>
-    <h1>🧠 Smart Scheduler IA</h1>
-    <p>Simulation d’ordonnancement — Tableaux, Gantt, Indices et IA intégrée</p>
+  <!-- ================= NAV / BANDEAU INDUSTRIEL ================= -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <!-- logo (CDN) -->
+      <img src="https://cdn-icons-png.flaticon.com/512/1048/1048947.png" alt="Logo industriel" class="logo-gear">
+      <span class="brand-name">Ordonnancement Industriel</span>
+    </div>
+
+    <div class="topbar-right">
+      <span class="status-dot" title="Statut serveur (simulation)"></span>
+      <span class="status-text">En ligne</span>
+    </div>
+  </nav>
+
+  <!-- ================= HERO / HEADER ================= -->
+  <header class="hero-header">
+    <div class="hero-content">
+      <h1 class="site-title">⚙️ Ordonnancement sur une seule machine</h1>
+      <p class="site-subtitle">Simulation intelligente — Gantt, indicateurs et IA d'aide à la décision</p>
+    </div>
   </header>
 
-  <main>
-    <!-- SECTION : AJOUT DES TÂCHES -->
-    <section class="inputs">
-      <h2>➕ Ajouter une tâche</h2>
+  <!-- ================= MAIN CONTAINER ================= -->
+  <main class="container">
+
+    <!-- --------- SECTION: FORMULAIRE D'AJOUT TACHES --------- -->
+    <section class="card" id="card-add">
+      <h2>➕ Ajouter / éditer une tâche</h2>
+
+      <!-- Row principale d'ajout -->
       <div class="form-row">
-        <label>Nom : <input id="name" type="text" placeholder="Ex: A" /></label>
-        <label>Durée (pi) : <input id="dur" type="number" min="1" value="5" /></label>
-        <label>Date promise (Di) : <input id="due" type="number" min="0" value="10" /></label>
-        <button id="addBtn">Ajouter</button>
-        <button id="clearBtn" class="ghost">Effacer tout</button>
+        <label for="name">Nom :</label>
+        <input id="name" type="text" placeholder="Ex : A" />
+
+        <label for="dur">Durée (pi) :</label>
+        <input id="dur" type="number" min="1" value="5" />
+
+        <label for="due">Date promise (Di) :</label>
+        <input id="due" type="number" min="0" placeholder="optionnel" />
+
+        <label for="hasPred" title="Coche si la tâche a un prédécesseur">A un prédécesseur :</label>
+        <input id="hasPred" type="checkbox" />
+
+        <label for="predName">Nom prédécesseur :</label>
+        <input id="predName" type="text" placeholder="Ex : B (optionnel)" />
+
+        <button id="addBtn" class="primary">Ajouter</button>
+        <button id="editBtn" class="secondary" style="display:none">Enregistrer changement</button>
+        <button id="clearBtn" class="secondary">Effacer tout</button>
       </div>
 
-      <div class="form-row" style="margin-top:10px;">
-        <button id="fifoBtn" class="primary">FIFO</button>
-        <button id="sptBtn" class="primary">SPT</button>
-        <button id="lptBtn" class="primary">LPT</button>
-        <button id="dpBtn" class="primary">DP</button>
-        <button id="rcBtn" class="primary">RC</button>
-        <button id="allBtn" class="primary">Tout calculer</button>
+      <!-- Notes / aide -->
+      <p class="muted" style="margin-top:10px;">
+        Astuce : si une tâche a un prédécesseur, indique son nom exact dans "Nom prédécesseur".<br>
+        Les prédécesseurs créent des contraintes simples (la tâche ne peut démarrer avant la fin du prédécesseur).
+      </p>
+
+      <!-- Choix des méthodes à calculer (checkboxes) -->
+      <div class="form-row small-gap" style="margin-top:12px;">
+        <label style="font-weight:700;color:#004aad;margin-right:8px">Méthodes :</label>
+        <label><input type="checkbox" id="method_fifo" checked> FIFO</label>
+        <label><input type="checkbox" id="method_spt" checked> SPT</label>
+        <label><input type="checkbox" id="method_lpt" checked> LPT</label>
+        <label><input type="checkbox" id="method_dp" checked> DP</label>
+        <label><input type="checkbox" id="method_rc" checked> RC</label>
+
+        <button id="allBtn" class="primary" style="margin-left:12px">Calculer sélection</button>
       </div>
 
-      <div class="form-row" style="margin-top:10px;">
-        <button id="indicesBtn" class="secondary">📊 Afficher les indices</button>
-        <button id="thinkIA" class="secondary">💡 Analyse IA</button>
-        <button id="exportPDF" class="danger">📄 Exporter tout en PDF</button>
+      <!-- Choix d'objectif (radio) -->
+      <div class="form-row small-gap" style="margin-top:12px;">
+        <label style="font-weight:700;color:#004aad;margin-right:8px">Objectif :</label>
+        <label><input type="radio" name="objective" value="Cmax" checked> Minimiser Cmax (makespan)</label>
+        <label><input type="radio" name="objective" value="Tardiness"> Minimiser retard total</label>
+        <span class="muted" style="margin-left:8px">Choisis l'objectif d'optimisation avant le calcul.</span>
+      </div>
+
+      <!-- Actions additionnelles -->
+      <div class="form-row small-gap" style="margin-top:12px;">
+        <button id="exportPDF" class="secondary">📄 Exporter PDF</button>
+        <input id="importPdfInput" type="file" accept="application/pdf" style="display:none" />
+        <button id="importPdfBtn" class="ghost">📥 Importer PDF</button>
+        <button id="exampleBtn" class="ghost">🔁 Charger exemple</button>
       </div>
     </section>
 
-    <!-- SECTION : TABLE DES TÂCHES -->
-    <section class="tasks">
-      <h2>📋 Liste des tâches</h2>
-      <table id="tasksTable">
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Durée (pi)</th>
-            <th>Date promise (Di)</th>
-            <th>Supprimer</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <!-- --------- SECTION: TABLEAU DES TACHES --------- -->
+    <section class="card" id="card-list">
+      <h2>📋 Liste des tâches (entrée)</h2>
+      <div class="table-wrap">
+        <table id="tasksTable" class="striped">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Durée</th>
+              <th>Date promise</th>
+              <th>Prédécesseur</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rempli dynamiquement -->
+          </tbody>
+        </table>
+      </div>
     </section>
 
-    <!-- SECTION : RÉSULTATS ET IA -->
-    <section id="results">
-      <h2>📊 Résultats - Tableaux & Gantt</h2>
-      <div id="resultContainer"></div>
+    <!-- --------- SECTION: RÉSULTATS & GANTT --------- -->
+    <section class="card" id="card-results">
+      <h2>📈 Résultats — Tableaux & GANTT</h2>
 
-      <!-- Tableau des indices -->
-      <div id="indicesContainer"></div>
+      <!-- Conteneur pour résultats tabulaires (méthode par méthode) -->
+      <div id="resultContainer" aria-live="polite"></div>
 
-      <!-- Zone d’analyse IA -->
-      <div id="aiThinker" class="ai-box"></div>
+      <!-- Zone Gantt globale (JS injecte les barres) -->
+      <div id="ganttArea" class="gantt-chart" aria-live="polite" style="margin-top:14px;">
+        <!-- barres et labels insérés par JS -->
+      </div>
+
+      <!-- Axe temporel / timeline sous le Gantt -->
+      <div id="timeAxis" class="time-axis" style="margin-top:8px;color:#445566;font-size:13px;">
+        <!-- JS va insérer 0,1,2... jusqu'à makespan -->
+      </div>
+
+      <!-- Indices automatiques (affiché sans bouton) -->
+      <div id="indicesContainer" style="margin-top:18px;"></div>
+
+      <!-- IA Thinker (affiché automatiquement par JS) -->
+      <div id="aiThinker" class="ai-box" style="margin-top:18px;"></div>
     </section>
+
+    <!-- --------- SECTION: FOOTER --------- -->
+    <footer class="card muted" style="margin-top:20px;">
+      <p>© 2025 — Projet Ordonnancement — <strong>Nabil Benkirane</strong></p>
+      <p>Prototype étudiant • Hébergé sur GitHub Pages</p>
+    </footer>
   </main>
 
-  <footer>
-    <p>© 2025 — Projet Ordonnancement IA par <strong>Nabil Benkirane</strong></p>
-    <p><a href="https://github.com/" target="_blank" style="color:white;">Voir le code sur GitHub</a></p>
-  </footer>
+  <!-- ================= SCRIPTS ================= -->
+  <!-- Le script principal (sera fourni après) -->
+  <script src="./script.js"></script>
 
-  <!-- Script principal -->
-  <script src="script.js"></script>
+  <!-- Petit script utilitaire pour importer PDF (ouvre l'input file) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('importPdfBtn')?.addEventListener('click', () => {
+        document.getElementById('importPdfInput').click();
+      });
+
+      // exemple rapide : charger jeu d'exemple
+      document.getElementById('exampleBtn')?.addEventListener('click', () => {
+        const evt = new CustomEvent('loadExample');
+        document.dispatchEvent(evt);
+      });
+    });
+  </script>
+
+  <!-- ================= COMMENTAIRES DES ELEMENTS =================
+    IDs importants utilisés par le JS:
+      - addBtn, editBtn, clearBtn
+      - name, dur, due, hasPred, predName
+      - method_fifo, method_spt, method_lpt, method_dp, method_rc
+      - allBtn
+      - tasksTable
+      - resultContainer, ganttArea, timeAxis
+      - indicesContainer, aiThinker
+      - exportPDF, importPdfInput, importPdfBtn
+    ================================================================= -->
+
 </body>
 </html>
