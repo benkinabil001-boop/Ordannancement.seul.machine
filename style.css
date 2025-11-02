@@ -1,0 +1,245 @@
+/* 🎨 STYLE GLOBAL - Smart Scheduler IA */
+
+/* ====== PAGE ====== */
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+  background: #f5f8ff;
+  color: #222;
+}
+
+header {
+  background: #0b5f8a;
+  color: white;
+  text-align: center;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.8em;
+}
+
+header p {
+  margin: 6px 0 0;
+  font-size: 0.95em;
+}
+
+main {
+  max-width: 1080px;
+  margin: auto;
+  padding: 20px;
+}
+
+footer {
+  background: #0b5f8a;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+  margin-top: 40px;
+}
+
+footer a {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* ====== SECTIONS ====== */
+section {
+  background: white;
+  padding: 18px;
+  margin-bottom: 24px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(11,95,138,0.07);
+}
+
+h2 {
+  color: #0b5f8a;
+  margin-top: 0;
+  font-size: 1.2em;
+}
+
+/* ====== FORM ====== */
+.form-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+input[type="text"],
+input[type="number"] {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd9ea;
+  width: 90px;
+  font-size: 14px;
+}
+
+/* ====== BUTTONS ====== */
+button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+
+button.primary {
+  background: #0b5f8a;
+  color: white;
+}
+
+button.secondary {
+  background: #e8f4fb;
+  color: #0b5f8a;
+  border: 1px solid #cfe7f6;
+}
+
+button.danger {
+  background: #e91e63;
+  color: white;
+}
+
+button.ghost {
+  background: white;
+  color: #0b5f8a;
+  border: 1px solid #0b5f8a;
+}
+
+button:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+/* ====== TABLES ====== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+th, td {
+  border: 1px solid #e6eef5;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background: #f0f8ff;
+  color: #0b5f8a;
+  font-weight: 700;
+}
+
+/* ====== CALC TITLES ====== */
+.calc-title, .gantt-title {
+  text-align: center;
+  font-weight: 700;
+  margin: 18px 0 10px;
+  color: #0b5f8a;
+  text-transform: uppercase;
+}
+
+/* ====== GANTT ====== */
+.gantt-chart {
+  margin-bottom: 20px;
+}
+
+.task-row {
+  display: flex;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.task-label {
+  width: 40px;
+  text-align: right;
+  margin-right: 10px;
+  font-weight: 700;
+  color: #0b5f8a;
+}
+
+.task-bar-container {
+  flex: 1;
+  position: relative;
+  height: 20px;
+  background: #eef6ff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.task-bar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: #2774ff;
+  color: white;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  box-shadow: inset 0 -2px 6px rgba(0,0,0,0.08);
+}
+
+.time-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-left: 50px;
+  color: #445566;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ====== TABLEAU DES INDICES ====== */
+.indices-table th {
+  background: #0b5f8a;
+  color: white;
+  padding: 10px;
+}
+
+.indices-table td {
+  background: #f0f8ff;
+  color: #003153;
+  border: 1px solid #cfe7f6;
+  padding: 8px;
+  font-weight: 600;
+}
+
+/* ====== ANALYSE IA ====== */
+.ai-box {
+  margin-top: 20px;
+  background: #f0fbff;
+  border-left: 5px solid #0b5f8a;
+  padding: 12px;
+  border-radius: 8px;
+  color: #003366;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  line-height: 1.6;
+}
+
+.ai-box h3 {
+  margin-top: 0;
+  color: #0b5f8a;
+}
+
+.ai-box ul {
+  margin: 8px 0 8px 20px;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 700px) {
+  .form-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .task-label {
+    width: 28px;
+    font-size: 13px;
+  }
+}
