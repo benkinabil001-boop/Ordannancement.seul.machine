@@ -1,274 +1,454 @@
-/* ======================================================
-   SCRIPT FINAL - SMART SCHEDULER IA
-   Compatible Render.com | Par Nabil Benkirane
-   ====================================================== */
+/* ============================================================
+   script.js — Smart Scheduler (machine unique)
+   - Prédecesseurs (contraintes simples)
+   - Axe temporel sous le Gantt
+   - Sélection & dé-duplication des méthodes
+   - Objectifs: Minimiser Cmax or Minimiser retard total
+   - Indices et IA affichés automatiquement après calcul
+   - Export PDF (html2canvas + jsPDF)
+   ============================================================ */
 
-let tasks = [];
-let lastMetrics = [];
+(() => {
+  // ---------- données globales ----------
+  let tasks = []; // { name, dur, due, hasPred(bool), predName }
+  let lastMetrics = []; // [{method, metrics}, ...]
 
-/* =============== GESTION DU TABLEAU DE TÂCHES =============== */
-function refreshTable() {
-  const tbody = document.querySelector("#tasksTable tbody");
-  tbody.innerHTML = "";
-  tasks.forEach((t, i) => {
-    tbody.insertAdjacentHTML(
-      "beforeend",
-      `<tr>
-        <td>${t.name}</td>
-        <td>${t.dur}</td>
-        <td>${t.due ?? "-"}</td>
-        <td><button style="background:#e74c3c;color:white;padding:5px;border:none;border-radius:5px" onclick="deleteTask(${i})">X</button></td>
-      </tr>`
-    );
-  });
-}
+  // ---------- utilitaires ----------
+  const el = id => document.getElementById(id);
+  const q = sel => document.querySelector(sel);
 
-function deleteTask(i) {
-  tasks.splice(i, 1);
-  refreshTable();
-  clearResults();
-}
+  function uid() { return Math.random().toString(36).slice(2,9); }
 
-document.getElementById("addBtn").addEventListener("click", () => {
-  const name = document.getElementById("name").value.trim() || `T${tasks.length + 1}`;
-  const dur = parseInt(document.getElementById("dur").value);
-  const dueVal = document.getElementById("due").value;
-  const due = dueVal === "" ? null : parseInt(dueVal);
-  if (!dur || dur <= 0) return alert("⚠️ Entrez une durée valide.");
-  tasks.push({ name, dur, due });
-  refreshTable();
-});
+  // ---------- REFRESH TABLE ----------
+  function refreshTable() {
+    const tbody = el('tasksTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    tasks.forEach((t, i) => {
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${t.name}</td>
+          <td>${t.dur}</td>
+          <td>${t.due !== null && t.due !== undefined ? t.due : '-'}</td>
+          <td>${t.hasPred ? (t.predName || '-') : '-'}</td>
+          <td>
+            <button class="ghost" onclick="window.__ss_delete(${i})">Suppr</button>
+          </td>
+        </tr>
+      `);
+    });
+  }
 
-document.getElementById("clearBtn").addEventListener("click", () => {
-  tasks = [];
-  refreshTable();
-  clearResults();
-});
-
-/* =============== UTILITAIRES =============== */
-function clearResults() {
-  document.getElementById("resultContainer").innerHTML = "";
-  document.getElementById("indicesContainer").innerHTML = "";
-  document.getElementById("aiThinker").innerHTML = "";
-  lastMetrics = [];
-}
-
-/* =============== ALGORITHMES D’ORDONNANCEMENT =============== */
-function computeSequence(method) {
-  const seq = [...tasks];
-  if (method === "SPT") seq.sort((a, b) => a.dur - b.dur);
-  if (method === "LPT") seq.sort((a, b) => b.dur - a.dur);
-  if (method === "DP")
-    seq.sort((a, b) => (a.due ?? Infinity) - (b.due ?? Infinity));
-  if (method === "RC")
-    seq.sort(
-      (a, b) =>
-        ((a.due ?? Infinity) / a.dur) - ((b.due ?? Infinity) / b.dur)
-    );
-  return seq;
-}
-
-/* =============== CALCUL DES MÉTRIQUES =============== */
-function evaluateSequence(seq) {
-  let t = 0;
-  const rows = [];
-  let totalLate = 0;
-
-  seq.forEach((task) => {
-    const start = t;
-    const end = start + task.dur;
-    const late = task.due ? Math.max(0, end - task.due) : 0;
-    rows.push({ ...task, start, end, late });
-    t = end;
-    totalLate += late;
-  });
-
-  const makespan = t;
-  const n = seq.length || 1;
-  const avgCompletion = rows.reduce((a, b) => a + b.end, 0) / n;
-  const avgNumber = makespan > 0 ? (n / makespan) * avgCompletion : 0;
-  const avgLate = totalLate / n;
-
-  return { rows, makespan, avgCompletion, avgNumber, totalLate, avgLate };
-}
-
-/* =============== AFFICHAGE TABLEAU + GANTT =============== */
-function renderMethodBlock(method) {
-  const seq = computeSequence(method);
-  const metrics = evaluateSequence(seq);
-
-  // stocker les métriques
-  const idx = lastMetrics.findIndex((x) => x.method === method);
-  if (idx >= 0) lastMetrics[idx] = { method, metrics };
-  else lastMetrics.push({ method, metrics });
-
-  let html = `<div class="calc-title">Tableau - ${method}</div>
-  <table class="calc-table">
-    <thead>
-      <tr><th>Tâche</th><th>Durée</th><th>Début</th><th>Fin</th><th>Date Promise</th><th>Retard</th></tr>
-    </thead><tbody>`;
-
-  metrics.rows.forEach((r) => {
-    html += `<tr>
-      <td>${r.name}</td>
-      <td>${r.dur}</td>
-      <td>${r.start}</td>
-      <td>${r.end}</td>
-      <td>${r.due ?? "-"}</td>
-      <td>${r.late}</td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-
-  // Gantt
-  const total = Math.max(1, metrics.makespan);
-  html += `<div class="gantt-title">GANTT ${method}</div><div class="gantt-chart">`;
-  metrics.rows.forEach((r) => {
-    const left = (r.start / total) * 100;
-    const width = (r.dur / total) * 100;
-    html += `
-      <div class="task-row">
-        <div class="task-label">${r.name}</div>
-        <div class="task-bar-container">
-          <div class="task-bar" style="left:${left}%;width:${width}%;">${r.dur}</div>
-        </div>
-      </div>`;
-  });
-  html += `</div>`;
-  return { html, metrics };
-}
-
-/* =============== BOUTONS MÉTHODES =============== */
-["fifo", "spt", "lpt", "dp", "rc"].forEach((m) => {
-  document.getElementById(`${m}Btn`).addEventListener("click", () => {
+  // expose a delete wrapper so button inline onclick works
+  window.__ss_delete = function(i) {
+    tasks.splice(i,1);
+    refreshTable();
     clearResults();
-    const blk = renderMethodBlock(m.toUpperCase());
-    document.getElementById("resultContainer").innerHTML = blk.html;
+    autoRecomputeIfNeeded();
+  };
+
+  function clearResults() {
+    el('resultContainer').innerHTML = '';
+    el('ganttArea').innerHTML = '';
+    el('timeAxis').innerHTML = '';
+    el('indicesContainer').innerHTML = '';
+    el('aiThinker').innerHTML = '';
+    lastMetrics = [];
+  }
+
+  // ---------- selected methods from UI (dedupe) ----------
+  function selectedMethodsFromUI() {
+    const mapping = {
+      method_fifo: 'FIFO',
+      method_spt: 'SPT',
+      method_lpt: 'LPT',
+      method_dp: 'DP',
+      method_rc: 'RC'
+    };
+    const methods = [];
+    Object.keys(mapping).forEach(id => {
+      const cb = el(id);
+      if (cb && cb.checked) methods.push(mapping[id]);
+    });
+    // dedupe and keep order as in list
+    const order = ['FIFO','SPT','LPT','DP','RC'];
+    return order.filter(m => methods.includes(m));
+  }
+
+  // ---------- objective from UI ----------
+  function getObjectiveFromUI() {
+    const sel = document.querySelector('input[name="objective"]:checked');
+    return sel ? sel.value : 'Cmax';
+  }
+
+  // ---------- compute sequence helpers ----------
+  // deep copy small
+  function cloneTasks(arr) {
+    return arr.map(t => ({...t}));
+  }
+
+  function computeSequence(method, tasksList) {
+    // returns an array (order) of tasks objects, but does not compute start/end here
+    const seq = cloneTasks(tasksList);
+    switch (method) {
+      case 'SPT': seq.sort((a,b) => a.dur - b.dur); break;
+      case 'LPT': seq.sort((a,b) => b.dur - a.dur); break;
+      case 'DP': seq.sort((a,b) => (a.due ?? Infinity) - (b.due ?? Infinity)); break;
+      case 'RC': seq.sort((a,b) => ((a.due ?? Infinity)/a.dur) - ((b.due ?? Infinity)/b.dur)); break;
+      default: /*FIFO*/ break;
+    }
+    return seq;
+  }
+
+  // Evaluate sequence taking into account precedence constraints:
+  // For each task in the sequence, its start is max(machineAvailable, predecessorEnd)
+  // machineAvailable moves forward by task durations (single machine).
+  function evaluateSequenceWithPrecedence(seq) {
+    const rows = [];
+    let machineAvailable = 0;
+    // we may need quick lookup for ends by name as we compute
+    const endByName = {};
+    // iterate in given order but ensure predecessor constraint by delaying start when needed
+    seq.forEach(task => {
+      const predName = (task.hasPred && task.predName) ? String(task.predName).trim() : null;
+      const predEnd = predName ? (endByName[predName] ?? 0) : 0;
+      const start = Math.max(machineAvailable, predEnd);
+      const end = start + task.dur;
+      const late = (task.due !== null && task.due !== undefined) ? Math.max(0, end - task.due) : 0;
+      rows.push({...task, start, end, late});
+      endByName[task.name] = end;
+      machineAvailable = end;
+    });
+    // metrics
+    const makespan = rows.length ? rows[rows.length-1].end : 0;
+    const n = seq.length || 1;
+    const avgCompletion = rows.reduce((s,r)=>s+r.end,0) / n;
+    const totalLate = rows.reduce((s,r)=>s+r.late,0);
+    const avgLate = totalLate / n;
+    return { rows, makespan, avgCompletion, totalLate, avgLate };
+  }
+
+  // ---------- render single method block (table + gantt fragment) ----------
+  function renderMethodBlock(method, tasksList) {
+    const seq = computeSequence(method, tasksList);
+    const metrics = evaluateSequenceWithPrecedence(seq);
+
+    // Build HTML for table
+    let html = `
+      <h3 style="text-align:center;margin-top:12px;color:var(--primary);">Méthode ${method}</h3>
+      <div class="table-wrap">
+        <table class="calc-table">
+          <thead><tr><th>Tâche</th><th>Durée</th><th>Début</th><th>Fin</th><th>Date promise</th><th>Retard</th></tr></thead>
+          <tbody>`;
+    metrics.rows.forEach(r => {
+      html += `<tr><td>${r.name}</td><td>${r.dur}</td><td>${r.start}</td><td>${r.end}</td><td>${r.due ?? '-'}</td><td>${r.late}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+
+    return { html, metrics };
+  }
+
+  // ---------- render overall results and Gantt ----------
+  function renderResultsForMethods(methods) {
+    if (!methods.length) {
+      alert('Sélectionnez au moins une méthode à calculer.');
+      return;
+    }
+    if (!tasks.length) {
+      alert('Ajoutez des tâches avant de calculer.');
+      return;
+    }
+
+    clearResults();
+
+    // compute each method metrics and accumulate html
+    let outHtml = '';
+    const metricsList = [];
+    methods.forEach(m => {
+      const blk = renderMethodBlock(m, tasks);
+      outHtml += blk.html;
+      metricsList.push({ method: m, metrics: blk.metrics });
+    });
+
+    el('resultContainer').innerHTML = outHtml;
+    lastMetrics = metricsList;
+
+    // build combined Gantt: choose first method to visualize by default, and show grouped bars per method
+    // For clarity we will display Gantt for each method stacked (method header + its bars)
+    const ganttArea = el('ganttArea');
+    ganttArea.innerHTML = '';
+    let globalMax = 0;
+    metricsList.forEach(item => {
+      globalMax = Math.max(globalMax, item.metrics.makespan);
+    });
+    if (globalMax === 0) globalMax = 1;
+
+    metricsList.forEach(item => {
+      const m = item.method;
+      const metrics = item.metrics;
+      // section title
+      const section = document.createElement('div');
+      section.innerHTML = `<h4 style="color:var(--primary-dark);margin:8px 0">${m}</h4>`;
+      // rows
+      metrics.rows.forEach(r => {
+        const row = document.createElement('div');
+        row.className = 'task-row';
+        // label
+        const label = document.createElement('div');
+        label.className = 'task-label';
+        label.textContent = r.name;
+        // bar container
+        const container = document.createElement('div');
+        container.className = 'task-bar-container';
+        // bar
+        const bar = document.createElement('div');
+        bar.className = 'task-bar';
+        // compute percent left and width based on globalMax to align axes across methods
+        const left = (r.start / globalMax) * 100;
+        const width = (r.dur / globalMax) * 100;
+        bar.style.left = `${left}%`;
+        bar.style.width = `${width}%`;
+        bar.style.background = 'linear-gradient(90deg, #ff8c00, #ffb86b)';
+        bar.textContent = r.dur;
+        // append
+        container.appendChild(bar);
+        row.appendChild(label);
+        row.appendChild(container);
+        section.appendChild(row);
+      });
+      ganttArea.appendChild(section);
+    });
+
+    // Render time axis (0..globalMax with integer ticks)
+    renderTimeAxis(Math.ceil(globalMax));
+
+    // Render indices automatically
+    renderIndices(lastMetrics);
+
+    // Run IA analysis automatically
+    thinkerAuto();
+
+  }
+
+  // ---------- render time axis ----------
+  function renderTimeAxis(maxT) {
+    const axis = el('timeAxis');
+    axis.innerHTML = '';
+    if (maxT <= 0) return;
+    // create ticks 0..maxT
+    // we'll show up to 20 ticks; if maxT > 20 show every step of ceil(maxT/20)
+    const maxTicks = 20;
+    let step = 1;
+    if (maxT > maxTicks) step = Math.ceil(maxT / maxTicks);
+    for (let t = 0; t <= maxT; t += step) {
+      const span = document.createElement('span');
+      span.textContent = t;
+      axis.appendChild(span);
+    }
+  }
+
+  // ---------- indices table ----------
+  function renderIndices(metricsList) {
+    if (!metricsList || !metricsList.length) return;
+    let html = `<h3 style="text-align:center;margin-top:10px;color:var(--primary);">📊 Indices de performance</h3>`;
+    html += `<div class="table-wrap"><table class="indices-table"><thead>
+      <tr><th>Méthode</th><th>Temps total (Cmax)</th><th>Temps moyen (compl.)</th><th>Retard total</th><th>Retard moyen</th></tr></thead><tbody>`;
+    metricsList.forEach(it => {
+      const m = it.metrics;
+      html += `<tr>
+        <td>${it.method}</td>
+        <td>${m.makespan.toFixed(2)}</td>
+        <td>${m.avgCompletion.toFixed(2)}</td>
+        <td>${m.totalLate.toFixed(2)}</td>
+        <td>${m.avgLate.toFixed(2)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+    el('indicesContainer').innerHTML = html;
+  }
+
+  // ---------- IA thinker (auto) ----------
+  function thinkerAuto() {
+    if (!lastMetrics || !lastMetrics.length) {
+      el('aiThinker').innerHTML = `<p style="color:#b91c1c">Aucun résultat calculé pour l'analyse IA.</p>`;
+      return;
+    }
+    const objective = getObjectiveFromUI();
+    // choose best according to objective
+    let best = lastMetrics[0];
+    if (objective === 'Cmax') {
+      best = lastMetrics.reduce((a,b) => a.metrics.makespan <= b.metrics.makespan ? a : b);
+    } else {
+      best = lastMetrics.reduce((a,b) => a.metrics.totalLate <= b.metrics.totalLate ? a : b);
+    }
+
+    // also choose method minimizing avgCompletion and minimizing totalLate separately for explanation
+    const bestAvg = lastMetrics.reduce((a,b) => a.metrics.avgCompletion <= b.metrics.avgCompletion ? a : b);
+    const bestLate = lastMetrics.reduce((a,b) => a.metrics.totalLate <= b.metrics.totalLate ? a : b);
+
+    // Formulate recommendation text carefully (avoid duplicate statements)
+    const parts = [];
+    parts.push(`<h3>🤖 Analyse IA automatique</h3>`);
+    parts.push(`<p>Objectif d'optimisation : <strong>${objective}</strong></p>`);
+    parts.push(`<p>Recommandation principale : utilisez la méthode <strong style="color:var(--primary-dark)">${best.method}</strong>.</p>`);
+
+    // explain tradeoffs
+    if (bestAvg.method !== bestLate.method) {
+      parts.push(`<ul>
+        <li>⏱️ <strong>${bestAvg.method}</strong> minimise le temps moyen de complétion.</li>
+        <li>📦 <strong>${bestLate.method}</strong> minimise le retard total.</li>
+      </ul>`);
+      parts.push(`<p>💡 Si vous cherchez un bon compromis, choisissez la méthode qui limite l'indicateur prioritaire selon l'objectif.</p>`);
+    } else {
+      parts.push(`<p>✅ Les analyses montrent que <strong>${bestAvg.method}</strong> est solide sur plusieurs critères (temps moyen et retard).</p>`);
+    }
+
+    // If user selected only one method, avoid redundant wording
+    const selected = selectedMethodsFromUI();
+    if (selected.length === 1) {
+      parts.push(`<p>Note : Vous avez choisi uniquement <strong>${selected[0]}</strong> comme méthode — les résultats s'appuient sur ce choix.</p>`);
+    }
+
+    // show short numeric summary of best method
+    parts.push(`<p style="margin-top:8px;color:#6b7280">Résumé : Cmax = ${best.metrics.makespan.toFixed(2)}, Retard total = ${best.metrics.totalLate.toFixed(2)}</p>`);
+
+    el('aiThinker').innerHTML = parts.join('');
+  }
+
+  // ---------- main action: compute based on selected methods ----------
+  el('allBtn').addEventListener('click', () => {
+    const methods = selectedMethodsFromUI();
+    // avoid duplicates already handled by selectedMethodsFromUI
+    renderResultsForMethods(methods);
   });
-});
 
-/* =============== TOUT CALCULER =============== */
-document.getElementById("allBtn").addEventListener("click", () => {
-  if (!tasks.length) return alert("Ajoute des tâches avant de calculer.");
-  clearResults();
-  const methods = ["FIFO", "SPT", "LPT", "DP", "RC"];
-  let out = "";
-  methods.forEach((m) => (out += renderMethodBlock(m).html));
-  document.getElementById("resultContainer").innerHTML = out;
-});
-
-/* =============== INDICES DE PERFORMANCE =============== */
-document.getElementById("indicesBtn").addEventListener("click", () => {
-  if (!tasks.length) return alert("Ajoute des tâches d'abord.");
-  if (lastMetrics.length === 0) {
-    const methods = ["FIFO", "SPT", "LPT", "DP", "RC"];
-    lastMetrics = methods.map((m) => ({
-      method: m,
-      metrics: evaluateSequence(computeSequence(m)),
-    }));
-  }
-
-  let html = `<h3 style="text-align:center;color:#0b5f8a;margin-top:14px;">Tableau des Indices de Performance</h3>`;
-  html += `<table class="indices-table"><thead><tr><th>Méthode</th><th>Temps total</th><th>Temps moyen</th><th>Nombre moyen</th><th>Retard total</th><th>Retard moyen</th></tr></thead><tbody>`;
-  lastMetrics.forEach((item) => {
-    const m = item.metrics;
-    html += `<tr>
-      <td>${item.method}</td>
-      <td>${m.makespan.toFixed(2)}</td>
-      <td>${m.avgCompletion.toFixed(2)}</td>
-      <td>${m.avgNumber.toFixed(2)}</td>
-      <td>${m.totalLate.toFixed(2)}</td>
-      <td>${m.avgLate.toFixed(2)}</td>
-    </tr>`;
+  // ---------- auto recompute when objective or method checkboxes change ----------
+  const methodIds = ['method_fifo','method_spt','method_lpt','method_dp','method_rc'];
+  methodIds.forEach(id => {
+    const cb = el(id);
+    if (!cb) return;
+    cb.addEventListener('change', () => {
+      clearResults();
+      autoRecomputeIfNeeded();
+    });
   });
-  html += `</tbody></table>`;
-  document.getElementById("indicesContainer").innerHTML = html;
-});
+  document.querySelectorAll('input[name="objective"]').forEach(r => {
+    r.addEventListener('change', () => {
+      // if results shown, recompute to reflect objective-based IA (metrics don't change, but IA suggestion may)
+      if (lastMetrics.length) thinkerAuto();
+    });
+  });
 
-/* =============== IA THINKER (locale) =============== */
-function thinker() {
-  if (!lastMetrics.length) {
-    document.getElementById("aiThinker").innerHTML =
-      "<p>⚠️ Calculez les indices avant d'activer l'analyse IA.</p>";
-    return;
+  function autoRecomputeIfNeeded() {
+    // If last tasks changed and there are selected methods and tasks exist, optionally compute automatically
+    // To avoid too many auto-runs, we will not auto-run heavy compute; only trigger if user previously computed
+    // For now we do nothing; user clicks 'Calculer sélection' to compute.
   }
 
-  const bestLate = lastMetrics.reduce((a, b) =>
-    a.metrics.totalLate < b.metrics.totalLate ? a : b
-  );
-  const bestAvg = lastMetrics.reduce((a, b) =>
-    a.metrics.avgCompletion < b.metrics.avgCompletion ? a : b
-  );
+  // ---------- Add task handler ----------
+  el('addBtn').addEventListener('click', () => {
+    const name = (el('name').value || '').trim() || `T${tasks.length+1}`;
+    const dur = parseInt(el('dur').value, 10);
+    const dueRaw = el('due').value;
+    const due = dueRaw === '' ? null : parseInt(dueRaw, 10);
+    const hasPred = !!el('hasPred').checked;
+    const predName = (el('predName').value || '').trim() || null;
 
-  const diffLate = Math.abs(
-    bestLate.metrics.totalLate - bestAvg.metrics.totalLate
-  ).toFixed(2);
-  const diffTime = Math.abs(
-    bestLate.metrics.avgCompletion - bestAvg.metrics.avgCompletion
-  ).toFixed(2);
+    if (!dur || dur <= 0) return alert('Entrer une durée valide (>0).');
+    if (hasPred && !predName) {
+      if (!confirm('Vous avez coché "A un prédécesseur" mais le nom est vide. Continuer sans prédécesseur ?')) {
+        return;
+      }
+    }
 
-  const message = `
-    <h3>🤖 IA Analyse & Raisonnement</h3>
-    <p>J'ai observé les performances calculées pour chaque stratégie.</p>
-    <ul>
-      <li>🔹 <strong>${bestAvg.method}</strong> donne le <strong>temps moyen le plus faible</strong> (${bestAvg.metrics.avgCompletion.toFixed(2)}).</li>
-      <li>🔹 <strong>${bestLate.method}</strong> minimise le <strong>retard total</strong> (${bestLate.metrics.totalLate.toFixed(2)}).</li>
-    </ul>
-    <p><strong>Analyse :</strong></p>
-    <ul>
-      <li>⚙️ Pour un flux rapide → <strong>${bestAvg.method}</strong></li>
-      <li>📦 Pour respecter les délais → <strong>${bestLate.method}</strong></li>
-    </ul>
-    <p>Écart observé : Δ temps moyen = ${diffTime}, Δ retard = ${diffLate}</p>
-    <p>💡 Recommandation : Combiner ${bestAvg.method} au début et ${bestLate.method} en fin de cycle pour une meilleure efficacité.</p>
-  `;
-  document.getElementById("aiThinker").innerHTML = message;
-}
-document.getElementById("thinkIA").addEventListener("click", thinker);
+    // name must be unique: if exists append suffix
+    let finalName = name;
+    const existingNames = tasks.map(t=>t.name);
+    let k = 1;
+    while (existingNames.includes(finalName)) {
+      finalName = `${name}_${k++}`;
+    }
 
-/* =============== EXPORT PDF MULTI-PAGES (Render Ready) =============== */
-document.getElementById("exportPDF").addEventListener("click", async () => {
-  const resultContainer = document.getElementById("resultContainer");
-  const indicesContainer = document.getElementById("indicesContainer");
-  const aiBox = document.getElementById("aiThinker");
+    tasks.push({ name: finalName, dur, due, hasPred: !!hasPred, predName: predName || null });
+    refreshTable();
+    clearResults();
+    // optional: if user wants quick calculation every add, you could call renderResultsForMethods here
+  });
 
-  if (!resultContainer.innerHTML.trim())
-    return alert("⚠️ Aucun résultat à exporter — clique 'Tout calculer' d'abord.");
+  // ---------- clear all ----------
+  el('clearBtn').addEventListener('click', () => {
+    if (!confirm('Effacer toutes les tâches ?')) return;
+    tasks = [];
+    refreshTable();
+    clearResults();
+  });
 
-  const pdf = new window.jspdf.jsPDF("p", "mm", "a4");
-  const imgWidth = 190;
+  // ---------- example dataset (button) ----------
+  el('exampleBtn')?.addEventListener('click', () => {
+    tasks = [
+      { name:'A', dur:4, due:10, hasPred:false, predName:null },
+      { name:'B', dur:7, due:15, hasPred:false, predName:null },
+      { name:'C', dur:3, due:9, hasPred:false, predName:null },
+      { name:'D', dur:5, due:20, hasPred:true, predName:'B' }, // D depends on B
+    ];
+    refreshTable();
+    clearResults();
+  });
 
-  // Page 1 — tableaux + Gantt
-  const canvas1 = await html2canvas(resultContainer, { scale: 2 });
-  const img1 = canvas1.toDataURL("image/png");
-  const imgHeight1 = (canvas1.height * imgWidth) / canvas1.width;
-  pdf.addImage(img1, "PNG", 10, 10, imgWidth, imgHeight1);
+  // ---------- export PDF ----------
+  el('exportPDF').addEventListener('click', async () => {
+    const rc = el('resultContainer');
+    if (!rc.innerHTML.trim()) return alert('Aucun résultat à exporter. Cliquez "Calculer sélection" d\'abord.');
+    try {
+      const pdf = new window.jspdf.jsPDF('p','mm','a4');
+      const canvas = await html2canvas(rc, { scale: 2 });
+      const img = canvas.toDataURL('image/png');
+      const width = 190;
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(img, 'PNG', 10, 10, width, height);
 
-  // Page 2 — indices + IA
-  pdf.addPage();
-  const canvas2 = await html2canvas(indicesContainer, { scale: 2 });
-  const img2 = canvas2.toDataURL("image/png");
-  const imgHeight2 = (canvas2.height * imgWidth) / canvas2.width;
-  pdf.addImage(img2, "PNG", 10, 10, imgWidth, imgHeight2);
+      const ai = el('aiThinker');
+      if (ai && ai.innerHTML.trim()) {
+        pdf.addPage();
+        const canvas2 = await html2canvas(ai, { scale: 2 });
+        const img2 = canvas2.toDataURL('image/png');
+        const h2 = (canvas2.height * width) / canvas2.width;
+        pdf.addImage(img2, 'PNG', 10, 10, width, h2);
+      }
+      pdf.save('Ordonnancement_Resultats.pdf');
+      alert('PDF généré.');
+    } catch (e) {
+      console.error(e);
+      alert('Erreur lors de la génération du PDF.');
+    }
+  });
 
-  if (aiBox.innerHTML.trim()) {
-    const canvas3 = await html2canvas(aiBox, { scale: 2 });
-    const img3 = canvas3.toDataURL("image/png");
-    const imgHeight3 = (canvas3.height * imgWidth) / canvas3.width;
-    pdf.addImage(img3, "PNG", 10, 20 + imgHeight2, imgWidth, imgHeight3);
-  }
+  // ---------- import PDF handler placeholder ----------
+  el('importPdfInput')?.addEventListener('change', (ev) => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    alert('Import PDF sélectionné : ' + f.name + '\n( Fonction d\'analyse PDF non implémentée ici )');
+    // If you want, we can add a PDF parsing step later.
+  });
 
-  pdf.save("Ordonnancement_IA_Complet.pdf");
-  alert("✅ PDF exporté avec succès (2 pages).");
-});
+  // ---------- initial sample tasks (optional) ----------
+  tasks = [
+    { name:'A', dur:4, due:10, hasPred:false, predName:null },
+    { name:'B', dur:7, due:15, hasPred:false, predName:null },
+    { name:'C', dur:3, due:9, hasPred:false, predName:null }
+  ];
+  refreshTable();
 
-/* =============== DONNÉES INITIALES (EXEMPLE) =============== */
-tasks = [
-  { name: "A", dur: 5, due: 12 },
-  { name: "B", dur: 7, due: 16 },
-  { name: "C", dur: 3, due: 9 },
-  { name: "D", dur: 8, due: 18 },
-  { name: "E", dur: 5, due: 14 },
-  { name: "F", dur: 10, due: 20 },
-];
-refreshTable();
+  // ---------- Auto-display: if page loads with tasks and checkboxes selected, you may call a compute
+  // Not auto-run to give user control. Uncomment if you want an immediate calculation:
+  // renderResultsForMethods(selectedMethodsFromUI());
+
+  // ---------- Expose small API for debugging from console ----------
+  window.__ss = {
+    tasks,
+    refreshTable,
+    renderResultsForMethods,
+    selectedMethodsFromUI,
+    getObjectiveFromUI
+  };
+
+})();
