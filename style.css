@@ -1,174 +1,289 @@
-/* 🎨 STYLE GLOBAL - Smart Scheduler IA */
+/* ======================================================
+   STYLE INDUSTRIEL — SMART SCHEDULER IA
+   Nabil Benkirane — Projet Génie Industriel
+====================================================== */
 
-/* ====== PAGE ====== */
+/* ====== VARIABLES GLOBALES ====== */
+:root {
+  --primary: #004aad;
+  --primary-dark: #003377;
+  --accent: #ff8c00;
+  --bg: #f5f7fa;
+  --text: #1f2a37;
+  --muted: #6b7280;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* ====== RESET DE BASE ====== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  margin: 0;
-  background: #f5f8ff;
-  color: #222;
+  font-family: "Inter", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
 }
 
-header {
-  background: #0b5f8a;
-  color: white;
+/* ====== BANDEAU INDUSTRIEL (TOPBAR) ====== */
+.topbar {
+  width: 100%;
+  background: #2e3b4e;
+  color: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 25px;
+  box-shadow: 0 2px 8px var(--shadow);
+  border-bottom: 3px solid var(--accent);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-gear {
+  width: 34px;
+  height: 34px;
+  filter: brightness(1.1);
+}
+
+.brand-name {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.topbar-right {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  background: #00c853;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #00c853;
+  animation: blink 2s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ====== HERO / HEADER ====== */
+.hero-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
   text-align: center;
-  padding: 18px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  padding: 60px 20px;
+  border-radius: 0 0 25px 25px;
+  box-shadow: 0 4px 20px var(--shadow);
 }
 
-header h1 {
-  margin: 0;
-  font-size: 1.8em;
-}
-
-header p {
-  margin: 6px 0 0;
-  font-size: 0.95em;
-}
-
-main {
-  max-width: 1080px;
-  margin: auto;
-  padding: 20px;
-}
-
-footer {
-  background: #0b5f8a;
-  color: white;
-  text-align: center;
-  padding: 10px;
-  font-size: 14px;
-  margin-top: 40px;
-}
-
-footer a {
+.site-title {
+  font-family: "Poppins", sans-serif;
+  font-weight: 700;
+  font-size: 2.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: #ffffff;
-  text-decoration: underline;
 }
 
-/* ====== SECTIONS ====== */
-section {
-  background: white;
-  padding: 18px;
-  margin-bottom: 24px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(11,95,138,0.07);
+.site-subtitle {
+  font-family: "Inter", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #e0ecff;
+  margin-top: 8px;
 }
 
-h2 {
-  color: #0b5f8a;
-  margin-top: 0;
-  font-size: 1.2em;
+/* ====== LAYOUT GLOBAL ====== */
+.container {
+  width: 95%;
+  max-width: 1100px;
+  margin: 35px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
 }
 
-/* ====== FORM ====== */
+/* ====== CARDS ====== */
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px var(--shadow);
+  padding: 25px;
+  border: 1px solid var(--border);
+}
+
+.card h2 {
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  color: var(--primary-dark);
+  border-left: 5px solid var(--accent);
+  padding-left: 10px;
+  margin-bottom: 15px;
+}
+
+/* ====== FORMULAIRES ====== */
 .form-row {
   display: flex;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 10px;
   align-items: center;
 }
 
-input[type="text"],
-input[type="number"] {
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid #cbd9ea;
-  width: 90px;
-  font-size: 14px;
+.form-row.small-gap {
+  gap: 6px;
 }
 
-/* ====== BUTTONS ====== */
-button {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
+label {
   font-weight: 600;
-  transition: all 0.2s ease-in-out;
+  color: var(--primary-dark);
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  background: #ffffff;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 5px var(--primary);
+}
+
+/* ====== BOUTONS ====== */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
 button.primary {
-  background: #0b5f8a;
-  color: white;
+  background: var(--primary);
+  color: #fff;
+  padding: 8px 14px;
+}
+
+button.primary:hover {
+  background: var(--primary-dark);
 }
 
 button.secondary {
-  background: #e8f4fb;
-  color: #0b5f8a;
-  border: 1px solid #cfe7f6;
+  background: #f1f5f9;
+  color: var(--primary-dark);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
 }
 
-button.danger {
-  background: #e91e63;
-  color: white;
+button.secondary:hover {
+  background: #e8edf3;
 }
 
 button.ghost {
-  background: white;
-  color: #0b5f8a;
-  border: 1px solid #0b5f8a;
+  background: transparent;
+  color: var(--primary-dark);
+  border: 1px solid var(--primary-dark);
+  padding: 8px 14px;
 }
 
-button:hover {
-  transform: scale(1.05);
-  opacity: 0.9;
+button.ghost:hover {
+  background: var(--primary-dark);
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ====== TABLES ====== */
+.table-wrap {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
   font-size: 14px;
+  margin-top: 10px;
 }
 
 th, td {
-  border: 1px solid #e6eef5;
-  padding: 8px;
+  border: 1px solid var(--border);
   text-align: center;
+  padding: 8px;
 }
 
 th {
-  background: #f0f8ff;
-  color: #0b5f8a;
-  font-weight: 700;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
 }
 
-/* ====== CALC TITLES ====== */
-.calc-title, .gantt-title {
-  text-align: center;
-  font-weight: 700;
-  margin: 18px 0 10px;
-  color: #0b5f8a;
-  text-transform: uppercase;
+td {
+  background: #fff;
+}
+
+tr:nth-child(even) td {
+  background: #f9fbff;
 }
 
 /* ====== GANTT ====== */
 .gantt-chart {
-  margin-bottom: 20px;
+  margin-top: 20px;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  position: relative;
 }
 
 .task-row {
   display: flex;
   align-items: center;
   margin: 6px 0;
+  position: relative;
 }
 
 .task-label {
-  width: 40px;
-  text-align: right;
-  margin-right: 10px;
+  width: 60px;
   font-weight: 700;
-  color: #0b5f8a;
+  color: var(--primary);
 }
 
 .task-bar-container {
   flex: 1;
   position: relative;
-  height: 20px;
-  background: #eef6ff;
-  border-radius: 10px;
+  height: 22px;
+  background: #e5e7eb;
+  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -176,70 +291,93 @@ th {
   position: absolute;
   top: 0;
   height: 100%;
-  background: #2774ff;
+  background: var(--accent);
   color: white;
-  font-weight: 800;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  box-shadow: inset 0 -2px 6px rgba(0,0,0,0.08);
+  border-radius: 6px;
+  transition: width 0.4s ease;
 }
 
+/* ====== AXE DU TEMPS ====== */
 .time-axis {
   display: flex;
   justify-content: space-between;
-  margin-left: 50px;
-  color: #445566;
-  font-weight: 600;
+  margin-top: 6px;
+  border-top: 2px solid #ccc;
   font-size: 13px;
+  color: #374151;
+  padding-top: 4px;
 }
 
-/* ====== TABLEAU DES INDICES ====== */
+.time-axis span {
+  flex: 1;
+  text-align: right;
+}
+
+/* ====== INDICES ====== */
+.indices-table {
+  margin-top: 12px;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
 .indices-table th {
-  background: #0b5f8a;
-  color: white;
-  padding: 10px;
+  background: var(--primary-dark);
+  color: #fff;
+  padding: 8px;
 }
 
 .indices-table td {
-  background: #f0f8ff;
-  color: #003153;
-  border: 1px solid #cfe7f6;
+  background: #f1f5f9;
+  color: var(--text);
+  border: 1px solid var(--border);
   padding: 8px;
   font-weight: 600;
 }
 
-/* ====== ANALYSE IA ====== */
+/* ====== IA BOX ====== */
 .ai-box {
-  margin-top: 20px;
-  background: #f0fbff;
-  border-left: 5px solid #0b5f8a;
-  padding: 12px;
+  background: #f8fafc;
+  border-left: 5px solid var(--primary);
+  padding: 15px;
   border-radius: 8px;
-  color: #003366;
+  color: var(--text);
   font-size: 15px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   line-height: 1.6;
+  box-shadow: 0 2px 5px var(--shadow);
 }
 
 .ai-box h3 {
-  margin-top: 0;
-  color: #0b5f8a;
+  color: var(--primary-dark);
+  margin-bottom: 10px;
 }
 
-.ai-box ul {
-  margin: 8px 0 8px 20px;
+/* ====== FOOTER ====== */
+footer.card.muted {
+  text-align: center;
+  background: var(--primary-dark);
+  color: #e6ebf3;
+  font-size: 13px;
+  padding: 20px;
+  border-radius: 12px;
 }
 
 /* ====== RESPONSIVE ====== */
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .form-row {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .task-label {
-    width: 28px;
-    font-size: 13px;
+    width: 45px;
+  }
+
+  .site-title {
+    font-size: 1.8rem;
   }
 }
