@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ordonnancement IA — Smart Scheduler</title>
+
+  <!-- Style principal -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Librairies externes (nécessaires au web / PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Meta pour le référencement -->
+  <meta name="description" content="Simulateur d’ordonnancement intelligent basé sur l’IA. Comparez FIFO, SPT, LPT, DP, RC, générez des Gantt et rapports PDF.">
+  <meta name="author" content="Nabil Benkirane">
+  <meta name="theme-color" content="#0b5f8a">
+</head>
+
+<body>
+  <header>
+    <h1>🧠 Smart Scheduler IA</h1>
+    <p>Simulation d’ordonnancement — Tableaux, Gantt, Indices et IA intégrée</p>
+  </header>
+
+  <main>
+    <!-- SECTION : AJOUT DES TÂCHES -->
+    <section class="inputs">
+      <h2>➕ Ajouter une tâche</h2>
+      <div class="form-row">
+        <label>Nom : <input id="name" type="text" placeholder="Ex: A" /></label>
+        <label>Durée (pi) : <input id="dur" type="number" min="1" value="5" /></label>
+        <label>Date promise (Di) : <input id="due" type="number" min="0" value="10" /></label>
+        <button id="addBtn">Ajouter</button>
+        <button id="clearBtn" class="ghost">Effacer tout</button>
+      </div>
+
+      <div class="form-row" style="margin-top:10px;">
+        <button id="fifoBtn" class="primary">FIFO</button>
+        <button id="sptBtn" class="primary">SPT</button>
+        <button id="lptBtn" class="primary">LPT</button>
+        <button id="dpBtn" class="primary">DP</button>
+        <button id="rcBtn" class="primary">RC</button>
+        <button id="allBtn" class="primary">Tout calculer</button>
+      </div>
+
+      <div class="form-row" style="margin-top:10px;">
+        <button id="indicesBtn" class="secondary">📊 Afficher les indices</button>
+        <button id="thinkIA" class="secondary">💡 Analyse IA</button>
+        <button id="exportPDF" class="danger">📄 Exporter tout en PDF</button>
+      </div>
+    </section>
+
+    <!-- SECTION : TABLE DES TÂCHES -->
+    <section class="tasks">
+      <h2>📋 Liste des tâches</h2>
+      <table id="tasksTable">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Durée (pi)</th>
+            <th>Date promise (Di)</th>
+            <th>Supprimer</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- SECTION : RÉSULTATS ET IA -->
+    <section id="results">
+      <h2>📊 Résultats - Tableaux & Gantt</h2>
+      <div id="resultContainer"></div>
+
+      <!-- Tableau des indices -->
+      <div id="indicesContainer"></div>
+
+      <!-- Zone d’analyse IA -->
+      <div id="aiThinker" class="ai-box"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 — Projet Ordonnancement IA par <strong>Nabil Benkirane</strong></p>
+    <p><a href="https://github.com/" target="_blank" style="color:white;">Voir le code sur GitHub</a></p>
+  </footer>
+
+  <!-- Script principal -->
+  <script src="script.js"></script>
+</body>
+</html>
