@@ -1,12 +1,13 @@
 /* ======================================================
    STYLE INDUSTRIEL — SMART SCHEDULER IA
-   Nabil Benkirane — Projet Génie Industriel
+   Nabil Benkirane — Génie Industriel 2025
+   Version : unité de saisie + Gantt + IA
 ====================================================== */
 
-/* ====== VARIABLES GLOBALES ====== */
+/* ===== VARIABLES ===== */
 :root {
   --primary: #004aad;
-  --primary-dark: #003377;
+  --primary-dark: #002c72;
   --accent: #ff8c00;
   --bg: #f5f7fa;
   --text: #1f2a37;
@@ -16,7 +17,7 @@
   --shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* ====== RESET DE BASE ====== */
+/* ===== RESET ===== */
 * {
   margin: 0;
   padding: 0;
@@ -28,10 +29,9 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
-  overflow-x: hidden;
 }
 
-/* ====== BANDEAU INDUSTRIEL (TOPBAR) ====== */
+/* ===== TOPBAR ===== */
 .topbar {
   width: 100%;
   background: #2e3b4e;
@@ -56,7 +56,7 @@ body {
 .logo-gear {
   width: 34px;
   height: 34px;
-  filter: brightness(1.1);
+  filter: brightness(1.2);
 }
 
 .brand-name {
@@ -65,13 +65,6 @@ body {
   font-size: 1.1rem;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-}
-
-.topbar-right {
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .status-dot {
@@ -88,7 +81,7 @@ body {
   50% { opacity: 0.5; }
 }
 
-/* ====== HERO / HEADER ====== */
+/* ===== HERO ===== */
 .hero-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: #fff;
@@ -104,7 +97,6 @@ body {
   font-size: 2.3rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #ffffff;
 }
 
 .site-subtitle {
@@ -115,7 +107,7 @@ body {
   margin-top: 8px;
 }
 
-/* ====== LAYOUT GLOBAL ====== */
+/* ===== CONTAINER ===== */
 .container {
   width: 95%;
   max-width: 1100px;
@@ -125,7 +117,7 @@ body {
   gap: 25px;
 }
 
-/* ====== CARDS ====== */
+/* ===== CARD ===== */
 .card {
   background: var(--card-bg);
   border-radius: 12px;
@@ -143,16 +135,12 @@ body {
   margin-bottom: 15px;
 }
 
-/* ====== FORMULAIRES ====== */
+/* ===== FORMULAIRE ===== */
 .form-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-}
-
-.form-row.small-gap {
-  gap: 6px;
 }
 
 label {
@@ -162,21 +150,62 @@ label {
 
 input[type="text"],
 input[type="number"],
+input[type="datetime-local"],
 select {
   padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid var(--border);
   font-size: 14px;
   background: #ffffff;
+  color: var(--text);
 }
 
-input:focus {
+input:focus, select:focus {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 5px var(--primary);
 }
 
-/* ====== BOUTONS ====== */
+/* ===== SELECTS ===== */
+#timeUnit,
+#taskUnit {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: var(--primary-dark);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#timeUnit:hover,
+#taskUnit:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 5px rgba(0, 74, 173, 0.3);
+}
+
+/* ===== CALENDRIER ===== */
+#realDateContainer {
+  align-items: center;
+  gap: 8px;
+}
+
+#realDateContainer input[type="datetime-local"] {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 14px;
+  color: var(--primary-dark);
+}
+
+#realDateContainer input[type="datetime-local"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}
+
+/* ===== BUTTONS ===== */
 button {
   cursor: pointer;
   border: none;
@@ -218,12 +247,7 @@ button.ghost:hover {
   color: white;
 }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ====== TABLES ====== */
+/* ===== TABLE ===== */
 .table-wrap {
   overflow-x: auto;
 }
@@ -247,29 +271,29 @@ th {
   font-weight: 600;
 }
 
-td {
-  background: #fff;
-}
-
 tr:nth-child(even) td {
   background: #f9fbff;
 }
 
-/* ====== GANTT ====== */
+/* ===== GANTT ===== */
 .gantt-chart {
   margin-top: 20px;
   padding: 10px;
   background: #f8fafc;
   border-radius: 10px;
   border: 1px solid var(--border);
-  position: relative;
+}
+
+.gantt-section {
+  margin-bottom: 25px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #d0d5dd;
 }
 
 .task-row {
   display: flex;
   align-items: center;
   margin: 6px 0;
-  position: relative;
 }
 
 .task-label {
@@ -281,7 +305,7 @@ tr:nth-child(even) td {
 .task-bar-container {
   flex: 1;
   position: relative;
-  height: 22px;
+  height: 26px;
   background: #e5e7eb;
   border-radius: 6px;
   overflow: hidden;
@@ -291,33 +315,34 @@ tr:nth-child(even) td {
   position: absolute;
   top: 0;
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(90deg, #1e40af, #3b82f6);
   color: white;
   font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 6px;
-  transition: width 0.4s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  text-shadow: 0 0 4px rgba(255,255,255,0.25), 0 1px 0 rgba(0,0,0,0.3);
 }
 
-/* ====== AXE DU TEMPS ====== */
-.time-axis {
+/* ===== AXES ===== */
+.method-axis {
   display: flex;
   justify-content: space-between;
-  margin-top: 6px;
-  border-top: 2px solid #ccc;
-  font-size: 13px;
+  margin-top: 4px;
+  border-top: 1px solid #ccc;
+  font-size: 12px;
   color: #374151;
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
-.time-axis span {
+.method-axis span {
   flex: 1;
   text-align: right;
 }
 
-/* ====== INDICES ====== */
+/* ===== INDICES ===== */
 .indices-table {
   margin-top: 12px;
   border-collapse: collapse;
@@ -339,7 +364,7 @@ tr:nth-child(even) td {
   font-weight: 600;
 }
 
-/* ====== IA BOX ====== */
+/* ===== IA BOX ===== */
 .ai-box {
   background: #f8fafc;
   border-left: 5px solid var(--primary);
@@ -356,7 +381,7 @@ tr:nth-child(even) td {
   margin-bottom: 10px;
 }
 
-/* ====== FOOTER ====== */
+/* ===== FOOTER ===== */
 footer.card.muted {
   text-align: center;
   background: var(--primary-dark);
@@ -366,7 +391,7 @@ footer.card.muted {
   border-radius: 12px;
 }
 
-/* ====== RESPONSIVE ====== */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .form-row {
     flex-direction: column;
@@ -381,3 +406,4 @@ footer.card.muted {
     font-size: 1.8rem;
   }
 }
+
